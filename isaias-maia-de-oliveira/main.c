@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TAM_MEMORIA(16 * 1024)
+#define TAM_MEMORIA (16 * 1024)
 
-static unsigned char
-memoria[TAM_MEMORIA];
+static unsigned char memoria[TAM_MEMORIA];
 
 typedef struct No {
     int valor;
@@ -13,124 +12,57 @@ typedef struct No {
 } No;
 
 typedef struct Bloco {
-   size_t tamanho;
-   int livre;
-   struct Bloco *proximo;
-}Bloco;
+    size_t tamanho;
+    int livre;
+    struct Bloco *proximo;
+} Bloco;
 
-void inicializaMemoria(){
+void inicializaMemoria() {
 
-   Bloco*primeiro= (Bloco *) memoria;
-   primeiro->tamanho = TAM_MEMORIA - sizeof(Bloco);
-   primeiro->livre = 1;
-   primeiro->proximo = NULL;
+    Bloco *primeiro = (Bloco *)memoria;
 
+    primeiro->tamanho = TAM_MEMORIA - sizeof(Bloco);
+    primeiro->livre = 1;
+    primeiro->proximo = NULL;
 }
 
-void*aloca(size_t tamanho) {
+void *aloca(size_t tamanho) {
 
-Bloco *bloco = (Bloco *) memoria;
- 
-while(bloco != NULL) {
+    Bloco *bloco = (Bloco *)memoria;
 
-  if(bloco->livre && bloco->tamanho >= tamanho){
+    while (bloco != NULL) {
 
-    if(bloco->tamanho >= tamanho + sizeof(Bloco) + 1){
+        if (bloco->livre && bloco->tamanho >= tamanho) {
 
-     Bloco *novoBloco = (Bloco *)((unsigned char*)(bloco + 1) + tamanho);
-     
-     novoBloco->livre = 1;
-     novoBloco->proximo = bloco-> proximo;
+            if (bloco->tamanho >= tamanho + sizeof(Bloco) + 1) {
 
-     bloco->tamanho = tamanho;
-     bloco->proximo = novoBloco;
-    }
-    
-   bloco-> livre = 0;
+                Bloco *novoBloco =
+                    (Bloco *)((unsigned char *)(bloco + 1) + tamanho);
 
-   return(void*)(bloco + 1);
-  }
-   bloco= bloco->proximo;
-  }
- return NULL; 
+                novoBloco->livre = 1;
+                novoBloco->proximo = bloco->proximo;
 
+                bloco->tamanho = tamanho;
+                bloco->proximo = novoBloco;
+            }
 
-void*libera(void*p){
-  
-  if(p == NULL) return;
+            bloco->livre = 0;
 
-   Bloco *bloco = ((Bloco *)p) - 1;
-  
-  bloco->livre = 1;
-}
+            return (void *)(bloco + 1);
+        }
 
-
-No *criarNo(int valor) {
-    No *novo = (No *) aloca(sizeof(No));
-
-    if (novo == NULL) {
-        printf("Erro ao alocar memoria.\n");
-        exit(1);
+        bloco = bloco->proximo;
     }
 
-    novo->valor = valor;
-    novo->anterior = NULL;
-    novo->proximo = NULL;
+    return NULL;
+}  // ← ESSA CHAVE ESTAVA FALTANDO
 
-    return novo;
-}
+void libera(void *p) {
 
-void inserirFinal(No **inicio, int valor) {
-    No *novo = criarNo(valor);
-
-    if (*inicio == NULL) {
-        *inicio = novo;
+    if (p == NULL)
         return;
-    }
 
-    No *atual = *inicio;
+    Bloco *bloco = ((Bloco *)p) - 1;
 
-    while (atual->proximo != NULL) {
-        atual = atual->proximo;
-    }
-
-    atual->proximo = novo;
-    novo->anterior = atual;
-}
-
-void imprimirLista(No *inicio) {
-    No *atual = inicio;
-
-    while (atual != NULL) {
-        printf("%d ", atual->valor);
-        atual = atual->proximo;
-    }
-
-    printf("\n");
-}
-
-void liberarLista(No *inicio) {
-    No *atual = inicio;
-
-    while (atual != NULL) {
-        No *proximo = atual->proximo;
-        libera(atual);
-        atual = proximo;
-    }
-}
-
-int main() {
-    No *inicio = NULL;
-
-    inicializaMemoria();
-    inserirFinal(&inicio, 10);
-    inserirFinal(&inicio, 20);
-    inserirFinal(&inicio, 30);
-
-    printf("Lista: ");
-    imprimirLista(inicio);
-
-    liberarLista(inicio);
-
-    return 0;
+    bloco->livre = 1;
 }
